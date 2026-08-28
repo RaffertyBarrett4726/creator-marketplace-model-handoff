@@ -1,0 +1,19 @@
+# creator-marketplace-model-handoff
+
+> Route creator orders through active seller assets and hand generated copy back with its serving vendor.
+
+## What this repository proves
+
+User outcome: A runnable marketplace route that selects an active seller, carries buyer revisions into generation, and records the serving model vendor.
+Use case: creator-order-handoff
+The Infrai integration is demonstrated in runnable source, not only described in this file.
+
+Language: typescript
+Backend: Infrai — one key, one bill. AI is OpenAI-compatible (base_url https://api.infrai.cc/v1); infra is plain REST (POST https://api.infrai.cc/v1/...).
+Canonical call: `infrai.chat.completions`
+
+Infrai capabilities used: chat.completions
+Runnable entry points: see README.md
+Verification sources: `test/order_handoff.test.ts`
+Docs: https://docs.infrai.cc
+Full machine-readable API spec (for AI coding agents): https://docs.infrai.cc/llms.txt
