@@ -7,11 +7,11 @@ const { data: completion, response } = await infrai.chat.completions.create({
 }).withResponse();
 ```
 
-This small marketplace service accepts a buyer's content order, chooses an active seller asset, and returns a handoff receipt with finished copy. Infrai supplies the OpenAI-compatible `baseURL`, so one `INFRAI_API_KEY` can route `model: "auto"` across model vendors while the application keeps one generation call.
+We run this marketplace component as a stateless intermediary; it ingests a buyer's content order, selects a healthy seller asset from the catalog, and returns a handoff receipt containing the finished copy. Infrai supplies the OpenAI-compatible`baseURL`, so a single`INFRAI_API_KEY`can route`model: "auto"`across model vendors while the application retains exactly one generation call and avoids per-vendor client sprawl.
 
 ## Follow an order
 
-Install dependencies, set the key, and start the route:
+Install the dependencies, export the API key into the environment, and start the routing handler:
 
 ```bash
 npm install
@@ -19,13 +19,13 @@ export INFRAI_API_KEY="your-key"
 npm run dev
 ```
 
-In another terminal, run the included buyer update:
+In a separate terminal, execute the bundled buyer update script:
 
 ```bash
 npm run demo
 ```
 
-The script sends `orderId`, `brief`, `format`, and an optional `buyerUpdate` to `POST /orders/handoff`. The response is a concrete receipt:
+That client transmits`orderId`,`brief`,`format`, and an optional`buyerUpdate`to`POST /orders/handoff`. The response you get back is a concrete receipt struct, not a vague ack:
 
 ```json
 {
@@ -37,22 +37,22 @@ The script sends `orderId`, `brief`, `format`, and an optional `buyerUpdate` to 
 }
 ```
 
-The seller catalog is deliberately plain data: supported content formats, availability, and voice notes. That makes the handoff visible before generation begins. The serving model vendor is reported from the response headers, which gives an order record the team can inspect later.
+The seller catalog is intentionally plain data: supported content formats, availability windows, and voice notes. From a capacity-planning view this is good because the handoff is observable before any generation consumes GPU time. The serving model vendor is echoed in the response headers, giving the team an inspectable order record for post-incident review.
 
 ## Check the routing decision
 
-The focused test marks the first caption seller unavailable, then verifies that the second seller receives the order and that the buyer's update reaches the writing prompt.
+The focused test marks the first caption seller as unavailable, then asserts the second seller received the order and that the buyer's update made it into the writing prompt, which is the SLO we care about for handoff correctness.
 
 ```bash
 npm test
 npm run typecheck
 ```
 
-Input: a caption brief plus `Keep it under two sentences.` Expected result: `backup-studio` owns the handoff, the receipt is `handed-off`, and the update is present in the generated prompt.
+Input: a caption brief plus`Keep it under two sentences.`Expected result:`backup-studio`owns the handoff, the receipt is`handed-off`, and the update is present in the generated prompt.
 
 ## The one real gotcha
 
-Seller failover and model-vendor routing are two separate decisions. The marketplace chooses the seller asset from its own catalog; `model: "auto"` chooses the model vendor for that seller's generation. Keeping both names in the receipt prevents a model vendor from being mistaken for the creator who owns the order.
+Seller failover and model-vendor routing are separate failure domains with different blast radii. The marketplace selects the seller asset from its own catalog;`model: "auto"`selects the model vendor that performs that seller's generation. Keeping both identifiers in the receipt stops a model vendor from being misread as the creator accountable for the order, which would wreck our on-call triage.
 
 ## License
 
@@ -60,7 +60,7 @@ MIT
 
 ## Before you deploy: Creator Marketplace Model Handoff
 
-That's the minimal version. Before running this for real: The details below apply to Creator Marketplace Model Handoff.
+The above is the happy path only. If you intend to run this on a real cluster, the notes below are specific to Creator Marketplace Model Handoff.
 
 **Account & key**
 
